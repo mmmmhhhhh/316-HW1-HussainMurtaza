@@ -19,7 +19,7 @@ export default class PlaylisterView {
      * for the Web page currently being viewed. Updating the DOM updates what the user sees 
      * in the browser.
      */
-    constructor() {}
+    constructor() { }
 
     /**
      * Adds a playlist card to to the left sidebar in the UI.
@@ -37,9 +37,12 @@ export default class PlaylisterView {
 
         playlistCard.querySelector("span").id = "playlist-card-text-" + newList.id;
         playlistCard.querySelector("span").textContent = newList.name;
-        
+
         let textInput = playlistCard.querySelector("#playlist-card-text-input-");
         textInput.id += newList.id;
+
+        const dupBtn = playlistCard.querySelector('input[id^="duplicate-list-button-"]');
+        if (dupBtn) dupBtn.id += newList.id;// HW1 EDIT
 
         playlistCard.querySelector('input[id^="delete-list-button-"]').id += newList.id;
 
@@ -67,7 +70,7 @@ export default class PlaylisterView {
      * Closes the edit song modal, which would be because either the
      * confirm or cancel button was pressed.
      */
-    closeEditSongModal() {        
+    closeEditSongModal() {
         // CLOSE THE MODAL
         let editSongModal = document.getElementById("edit-song-modal");
         editSongModal.classList.remove("is-visible");
@@ -93,7 +96,7 @@ export default class PlaylisterView {
      * 
      * @param {number} id The id of the button control to enable.
      */
-   enableButton(id) {
+    enableButton(id) {
         let button = document.getElementById(id);
         button.classList.remove("disabled");
         button.disabled = false;

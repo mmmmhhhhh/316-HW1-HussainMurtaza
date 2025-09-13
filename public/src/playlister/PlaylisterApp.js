@@ -1,93 +1,80 @@
 import PlaylisterModel from './PlaylisterModel.js';
 import PlaylisterView from './PlaylisterView.js';
 import PlaylisterController from './PlaylisterController.js';
+import PlaylistSongPrototype from './PlaylistSongPrototype.js';
 
 /**
- * This is the entry point into our application, it launches the app by first
- * checking to see if any playlists were saved to the browsers's local storage,
- * loads them if found.
- * 
- * @author McKilla Gorilla
+ * Entry point: wires MVC and loads lists (localStorage first, then JSON seed).
  */
 export class PlaylisterApp {
-    /**
-     * Initializes the application, setting up MVC for use, but still needs to be started.
-     */
     constructor() {
-        // FIRST MAKE THE APP COMPONENTS
+        // Build MVC
         this.model = new PlaylisterModel();
         this.view = new PlaylisterView();
         this.controller = new PlaylisterController();
 
-        // THE MODEL NEEDS THE VIEW TO NOTIFY IT EVERY TIME DATA CHANGES
         this.model.setView(this.view);
-
-        // THE VIEW NEEDS THE CONTROLLER TO HOOK UP HANDLERS TO ITS CONTROLS
         this.view.setController(this.controller);
-
-        // AND THE CONTROLLER NEEDS TO MODEL TO UPDATE WHEN INTERACTIONS HAPPEN
         this.controller.setModel(this.model);
     }
 
     /**
-     * This function loads the playlists found inside the JSON file into the app.
-     * If the playlists have never been stored in local storage this function 
-     * can be used to store initial playlist data for the purpose of testing 
-     * using the provided lists.
-    */
-    loadListsFromJSON(jsonFilePath) {
-        let xmlhttp = new XMLHttpRequest();
-        let modelToUpdate = this.model;
+     * Loads playlists from a JSON file (supports 3-arg or 4-arg songs incl. year).
+     * Accepts a single path or an array of paths; tries them in order until one works.
+     * Returns true if something was successfully loaded.
+     */
+    async loadListsFromJSON(jsonPaths) {
+        const paths = Array.isArray(jsonPaths) ? jsonPaths : [jsonPaths];
 
-        // THIS DEFINES A CALLBACK THAT WILL BE INVOKED ONCE
-        // THE CONTENTS OF THE JSON FILE ARE ACTUALLY RECEIVED,
-        // NOTE THAT THIS ONLY HAPPENS IN RESPONSE TO THE
-        // open AND THEN send FUNCTIONS BEING CALLED ON A VALID
-        // JSON FILE
-        xmlhttp.onreadystatechange = function () {
-            if (this.readyState == 4 && this.status == 200) {
-                let lists = JSON.parse(this.responseText).playlists;
+        for (const p of paths) {
+            try {
+                const res = await fetch(p, { cache: 'no-store' });
+                if (!res.ok) continue;
 
-                // GO THROUGH THE DATA AND LOAD IT INTO OUR APP'S DATA MODEL
-                for (let i = 0; i < lists.length; i++) {
-                    let listData = lists[i];
-                    let songs = [];
-                    for (let j = 0; j < listData.songs.length; j++) {
-                        songs[j] = listData.songs[j];
-                    }
-                    modelToUpdate.addNewList(listData.name, songs);
+                const data = await res.json();
+                const lists = Array.isArray(data?.playlists) ? data.playlists : [];
+
+                for (const listData of lists) {
+                    const songs = (listData.songs || []).map(s => {
+                        // Prefer 4-arg (title, artist, year, youTubeId); fallback to 3-arg.
+                        try {
+                            return new PlaylistSongPrototype(s.title, s.artist, s.year, s.youTubeId);
+                        } catch {
+                            return new PlaylistSongPrototype(s.title, s.artist, s.youTubeId);
+                        }
+                    });
+                    this.model.addNewList(listData.name, songs);
                 }
+
+                this.model.sortLists();
+                this.model.saveLists();
+                return true;
+            } catch {
+                // try next path
             }
-        };
-        xmlhttp.open("GET", jsonFilePath, true);
-        xmlhttp.send();
+        }
+        return false;
     }
 
     /**
-     * Sets up the application for use once the initial HTML file has fully loaded
-     * meaning it will load the initial lists such that all needed playlist cards
-     * are available.
-     * 
-     * @param {*} testFile The JSON file containing initial playlists of data.
+     * Kicks off the app once the DOM is ready.
      */
     start() {
-        // DISABLE ALL RELEVANT 
         this.view.init();
 
-        // FIRST TRY AND GET THE LISTS FROM LOCAL STORAGE
-        let success = this.model.loadLists();
-        if (!success) {
-            this.loadListsFromJSON("./data/default_lists.json");
-        }
+        // 1) Try localStorage
+        const loadedFromLocal = this.model.loadLists();
+        if (loadedFromLocal) return;
+
+        // 2) Seed from JSON (your repo has src under /public, so data is /public/data)
+        this.loadListsFromJSON([
+            '/public/data/playlists.json',       // our suggested name
+            '/public/data/default_lists.json'    // fallback to professor’s original
+        ]);
     }
 }
 
-/**
- * This callback is where our application begins as this function is invoked once the HTML page
- * has fully loaded its initial elements into the DOM.
- */
-window.onload = function() {
-    // MAKE THE APP AND START IT
-    let app = new PlaylisterApp();
+window.onload = () => {
+    const app = new PlaylisterApp();
     app.start();
-}
+};

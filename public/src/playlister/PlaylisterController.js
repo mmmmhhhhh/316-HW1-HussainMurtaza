@@ -3,19 +3,16 @@
  * 
  * @author McKilla Gorilla
  */
+import PlaylistSongPrototype from './PlaylistSongPrototype.js';//edit hw1
 export default class PlaylisterController {
     constructor() { }
 
     addNewPlaylist() {
-        // optional: if the user is renaming a list, ignore the click
-        if (this.model.isListNameBeingChanged()) return;
-
-        // create a brand-new empty list named "Untitled"
-        const newList = this.model.addNewList("Untitled", []);
-
-        // immediately select it so it opens for editing
-        this.model.loadList(newList.id);
+        if (this.model.isListNameBeingChanged()) return;      // don’t interfere with rename
+        const newList = this.model.addNewList("Untitled", []); // creates, sorts, refreshes sidebar
+        this.model.loadList(newList.id);                       // select it so songs area opens
     }
+
     /**
      * This function makes sure the event doesn't get propogated to other controls.
      */
@@ -37,6 +34,9 @@ export default class PlaylisterController {
 
         // SETUP THE MODAL HANDLERS
         this.registerModalHandlers();
+
+        // NEW: event delegation for playlist-cards (handles duplicate clicks reliably)
+        this.registerDelegatedHandlers();
     }
 
     /**
@@ -45,7 +45,7 @@ export default class PlaylisterController {
     registerEditToolbarHandlers() {
 
         // HANDLER FOR ADDING A NEW PLAYLIST BUTTON
-        document.getElementById("add-list-button").onmousedown = (event) => {///edit
+        document.getElementById("add-list-button").onmousedown = (event) => {
             this.addNewPlaylist();
         };
         // HANDLER FOR ADDING A NEW SONG BUTTON
@@ -66,6 +66,29 @@ export default class PlaylisterController {
             this.model.unselectCurrentList();
         }
     }
+    registerDelegatedHandlers() {//hw1 edit
+        // Use event delegation to handle clicks on duplicate buttons
+        const container = document.getElementById('playlist-cards');
+        if (!container) return;
+
+        container.addEventListener('mousedown', (event) => {
+            const target = event.target;
+            if (!target || !target.id) return;
+
+            // DUPLICATE: buttons like duplicate-list-button-<id>
+            if (target.id.startsWith('duplicate-list-button-')) {
+                this.ignoreParentClick(event);
+
+                // extract the playlist id and keep its type consistent (number or string)
+                const rawId = target.id.substring('duplicate-list-button-'.length);
+                const id = /^\d+$/.test(rawId) ? Number(rawId) : rawId;
+
+                const newList = this.model.duplicateList(id);
+                if (newList) this.model.loadList(newList.id);
+            }
+        });
+    }
+
 
     /**
      * Specifies  event handlers for when confirm and cancel buttons
@@ -153,6 +176,17 @@ export default class PlaylisterController {
             deleteListModal.classList.add("is-visible");
             this.model.toggleConfirmDialogOpen();
         }
+        // HANDLES DUPLICATING A PLAYLIST
+        const dupEl = document.getElementById("duplicate-list-button-" + id);
+        if (dupEl) {
+            dupEl.onmousedown = (e) => {
+                this.ignoreParentClick(e);
+                if (this.model.isListNameBeingChanged()) return;
+                const newList = this.model.duplicateList(id);
+                if (newList) this.model.loadList(newList.id);
+            };
+        }
+
         // FOR RENAMING THE LIST NAME
         document.getElementById("playlist-card-" + id).ondblclick = (event) => {
             let text = document.getElementById("playlist-card-text-" + id)
@@ -210,6 +244,8 @@ export default class PlaylisterController {
                 document.getElementById("edit-song-modal-title-textfield").value = song.title;
                 document.getElementById("edit-song-modal-artist-textfield").value = song.artist;
                 document.getElementById("edit-song-modal-youTubeId-textfield").value = song.youTubeId;
+                document.getElementById("edit-song-modal-year-textfield").value = (song.year ?? "");//HW 1 edit
+
 
                 // OPEN UP THE MODAL
                 let editSongModal = document.getElementById("edit-song-modal");
