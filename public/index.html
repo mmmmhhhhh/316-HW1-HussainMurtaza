@@ -17,7 +17,7 @@
 <head>
     <title>Playlister</title>
     <meta charset="utf-8">
-    
+
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
     <!-- WE ARE USING THE Tangerine FONT FOR MOST CONTROLS -->
@@ -46,6 +46,9 @@
         <div id="playlist-cards">
         </div>
         <div id="edit-toolbar">
+            <!-- NEW: Add Playlist edit --> 
+            <input type="button" id="add-list-button" value="Add List" class="toolbar-button" />
+            
             <input type="button" id='add-song-button' value="+" class='toolbar-button' />
             <input type="button" id='undo-button' value="⟲" class="toolbar-button" />
             <input type="button" id='redo-button' value="⟳" class="toolbar-button" />
@@ -56,15 +59,10 @@
         <div id="statusbar"></div>
 
         <!-- PROTOTYPE FOR MAKING PLAYLIST CARDS -->
-        <div hidden id="playlist-card-prototype"
-            class="playlist-card unselected-playlist-card">
-            <span id="playlist-card-text-"
-                class="playlist-card-text"></span>
-            <input hidden id="playlist-card-text-input-"
-                type="text" class="playlist-card-text-input" />
-            <input id="delete-list-button-"
-                type="button" class="playlist-card-button"
-                value="🗑" />
+        <div hidden id="playlist-card-prototype" class="playlist-card unselected-playlist-card">
+            <span id="playlist-card-text-" class="playlist-card-text"></span>
+            <input hidden id="playlist-card-text-input-" type="text" class="playlist-card-text-input" />
+            <input id="delete-list-button-" type="button" class="playlist-card-button" value="🗑" />
         </div>
 
 
@@ -73,9 +71,12 @@
             <div id='edit-song-root' class="modal-root">
                 <div id="edit-song-modal-header" class="modal-north">Edit Song</div>
                 <div id="edit-song-modal-content" class="modal-center">
-                    <div id="title-prompt" class="modal-prompt">Title:</div><input id="edit-song-modal-title-textfield" class='modal-textfield' type="text" value="?" />
-                    <div id="artist-prompt" class="modal-prompt">Artist:</div><input id="edit-song-modal-artist-textfield" class='modal-textfield' type="text" value="?" />
-                    <div id="you-tube-id-prompt" class="modal-prompt">You Tube Id:</div><input id="edit-song-modal-youTubeId-textfield" class='modal-textfield' type="text" value="?" />
+                    <div id="title-prompt" class="modal-prompt">Title:</div><input id="edit-song-modal-title-textfield"
+                        class='modal-textfield' type="text" value="?" />
+                    <div id="artist-prompt" class="modal-prompt">Artist:</div><input
+                        id="edit-song-modal-artist-textfield" class='modal-textfield' type="text" value="?" />
+                    <div id="you-tube-id-prompt" class="modal-prompt">You Tube Id:</div><input
+                        id="edit-song-modal-youTubeId-textfield" class='modal-textfield' type="text" value="?" />
                 </div>
                 <div class="modal-south">
                     <input type="button" id="edit-song-confirm-button" class="modal-button" value='Confirm' />
@@ -89,7 +90,7 @@
             <div class="modal-root" id='verify-delete-list-root'>
                 <div class="modal-north">
                     Delete playlist?
-                </div>                
+                </div>
                 <div class="modal-center">
                     <div class="modal-center-content">
                         Are you sure you wish to permanently delete the <span id="delete-list-span"></span> playlist?

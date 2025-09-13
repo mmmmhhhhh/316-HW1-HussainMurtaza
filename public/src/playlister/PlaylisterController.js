@@ -6,6 +6,16 @@
 export default class PlaylisterController {
     constructor() { }
 
+    addNewPlaylist() {
+        // optional: if the user is renaming a list, ignore the click
+        if (this.model.isListNameBeingChanged()) return;
+
+        // create a brand-new empty list named "Untitled"
+        const newList = this.model.addNewList("Untitled", []);
+
+        // immediately select it so it opens for editing
+        this.model.loadList(newList.id);
+    }
     /**
      * This function makes sure the event doesn't get propogated to other controls.
      */
@@ -33,6 +43,11 @@ export default class PlaylisterController {
      * Specifies event handlers for buttons in the toolbar.
      */
     registerEditToolbarHandlers() {
+
+        // HANDLER FOR ADDING A NEW PLAYLIST BUTTON
+        document.getElementById("add-list-button").onmousedown = (event) => {///edit
+            this.addNewPlaylist();
+        };
         // HANDLER FOR ADDING A NEW SONG BUTTON
         document.getElementById("add-song-button").onmousedown = (event) => {
             this.model.addTransactionToCreateSong();
@@ -47,7 +62,7 @@ export default class PlaylisterController {
         }
         // HANDLER FOR CLOSE LIST BUTTON
         document.getElementById("close-button").onmousedown = (event) => {
-           // this.model.unselectAll();
+            // this.model.unselectAll();
             this.model.unselectCurrentList();
         }
     }
@@ -211,7 +226,7 @@ export default class PlaylisterController {
                 this.ignoreParentClick(event);
 
                 // RECORD WHICH SONG SO THE MODAL KNOWS AND UPDATE THE MODAL TEXT
-                let songIndex = Number.parseInt(event.target.id.split("-")[2]);               
+                let songIndex = Number.parseInt(event.target.id.split("-")[2]);
 
                 // PROCESS THE REMOVE SONG EVENT
                 this.model.addTransactionToRemoveSong(songIndex);
